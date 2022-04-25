@@ -37,7 +37,8 @@ createTS times values = TS completeTimes extendedValues
     extendedValues = map (\v-> Map.lookup v timeValueMap) completeTimes
 
 -- Step 2 -> Create a helper function to "format your files" (unzip them) --
--- Then create a way to show your time value pairs --
+-- create a way to show your time value pairs --
+-- Create an instance of show using both of these functions --
 
 fileToTS :: [(Int,a)] -> TS a
 fileToTS tvPairs = createTS times values
@@ -47,3 +48,36 @@ fileToTS tvPairs = createTS times values
 showTVPair :: Show a => Int -> (Maybe a) -> String
 showTVPair time (Just value) = mconcat [show time, "|" , show value, "\n"]
 showTVPair time Nothing = mconcat [show time ,"|NA\n"]
+
+instance Show a => Show (TS a) where
+    show (TS times values) = mconcat rows
+       where
+           rows = zipWith showTVPair times values
+
+-- Step 3 -> Convert all your "Files" to TS types --
+
+ts1 :: TS Double
+ts1 = fileToTS file1
+ts2 :: TS Double
+ts2 = fileToTS file2
+ts3 :: TS Double
+ts3 = fileToTS file3
+ts4 :: TS Double
+ts4 = fileToTS file4
+
+-- Step 4 -> Combining TS types --
+
+insertMaybePair :: Ord k => Map.Map k v -> (k, Maybe v) -> Map.Map k v
+insertMaybePair myMap (_,Nothing) = myMap
+insertMaybePair myMap (key,(Just value)) = Map.insert key value myMap
+
+combineTSTypes :: TS a -> TS a -> TS a
+combineTSTypes (TS [] []) ts2 = ts2
+combineTSTypes ts1 (TS [] []) = ts1
+combineTSTypes (TS t1 v1)(TS t2 v2) = TS completeTimes combinedValues
+    where
+        bothTimes = mconcat [t1,t2]
+        tvMap = foldl insertMaybePair Map.empty (zip t1 v1)
+        updatedMap = foldl insertMaybePair tvMap (zip t2 v2)
+        completeTimes = [minimum bothTimes .. maximum bothTimes]
+        combinedValues = map (\v -> Map.lookup v updatedMap) completeTimes
