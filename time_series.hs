@@ -66,18 +66,31 @@ ts4 :: TS Double
 ts4 = fileToTS file4
 
 -- Step 4 -> Combining TS types --
+-- Create a combine function and the use an instance of semigrup to call said function -- 
 
 insertMaybePair :: Ord k => Map.Map k v -> (k, Maybe v) -> Map.Map k v
 insertMaybePair myMap (_,Nothing) = myMap
 insertMaybePair myMap (key,(Just value)) = Map.insert key value myMap
 
-combineTSTypes :: TS a -> TS a -> TS a
-combineTSTypes (TS [] []) ts2 = ts2
-combineTSTypes ts1 (TS [] []) = ts1
-combineTSTypes (TS t1 v1)(TS t2 v2) = TS completeTimes combinedValues
+combineTS :: TS a -> TS a -> TS a
+combineTS (TS [] []) ts2 = ts2
+combineTS ts1 (TS [] []) = ts1
+combineTS (TS t1 v1)(TS t2 v2) = TS completeTimes combinedValues
     where
         bothTimes = mconcat [t1,t2]
         tvMap = foldl insertMaybePair Map.empty (zip t1 v1)
         updatedMap = foldl insertMaybePair tvMap (zip t2 v2)
         completeTimes = [minimum bothTimes .. maximum bothTimes]
         combinedValues = map (\v -> Map.lookup v updatedMap) completeTimes
+
+instance Semigroup (TS a) where
+    (<>) = combineTS
+
+-- Step 5 -> Create an instance of Monoid by adding identity then use mconcat to add it all together --
+
+instance Monoid (TS a) where
+    mempty = TS [] []
+    mappend = (<>)
+
+tsAll :: TS Double
+tsAll = mconcat [ts1,ts2,ts3,ts4]
