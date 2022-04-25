@@ -23,3 +23,27 @@ file4 = [(26, 219.8), (27, 220.5), (28, 223.8)
         ,(29, 222.8), (30, 223.8), (31, 221.7)
         ,(32, 222.3), (33, 220.8), (34, 219.4)
         ,(35, 220.1), (36, 220.6)]
+
+-- Step 1 -> make a basic type for your time series --
+-- After create a func that takes a list of values and creates a TS type --
+
+data TS a = TS [Int] [Maybe a]
+
+createTS :: [Int] -> [a] -> TS a
+createTS times values = TS completeTimes extendedValues
+   where
+    completeTimes = [minimum times .. maximum times]
+    timeValueMap = Map.fromList (zip times values)
+    extendedValues = map (\v-> Map.lookup v timeValueMap) completeTimes
+
+-- Step 2 -> Create a helper function to "format your files" (unzip them) --
+-- Then create a way to show your time value pairs --
+
+fileToTS :: [(Int,a)] -> TS a
+fileToTS tvPairs = createTS times values
+   where
+       (times,values) = unzip tvPairs
+
+showTVPair :: Show a => Int -> (Maybe a) -> String
+showTVPair time (Just value) = mconcat [show time, "|" , show value, "\n"]
+showTVPair time Nothing = mconcat [show time ,"|NA\n"]
