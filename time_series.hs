@@ -104,8 +104,6 @@ mean xs = total/count
      total = (realToFrac . sum) xs
      count = (realToFrac . length) xs
 
-
-
 meanTS :: (Real a) => TS a -> Maybe Double
 meanTS (TS _ []) = Nothing
 meanTS (TS times values) = if all (== Nothing) values then Nothing else Just avg
